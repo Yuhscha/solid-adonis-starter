@@ -1,0 +1,70 @@
+{
+  "name": "Solid Adonis Development",
+  "dockerComposeFile": ["./compose.yaml"],
+  "service": "dev",
+  "workspaceFolder": "/workspace",
+  "remoteEnv": {
+    "LOCAL_WORKSPACE_FOLDER": "${localWorkspaceFolder}"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bradlc.vscode-tailwindcss",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "ms-vscode.vscode-typescript-next",
+        "solid.vscode-solid",
+        "formulahendry.auto-rename-tag",
+        "christian-kohler.path-intellisense",
+        "usernamehw.errorlens",
+        "github.copilot",
+        "github.copilot-chat",
+        "skellock.just",
+        "ms-azuretools.vscode-docker",
+        "jripouteau.adonis-vscode-extension",
+        "ckolkman.vscode-postgres",
+        "eamodio.gitlens",
+        "rangav.vscode-thunder-client",
+        "mikestead.dotenv",
+        "ms-vscode.vscode-json",
+        "antfu.iconify",
+        "VisualStudioExptTeam.vscodeintellicode",
+        "humao.rest-client",
+        "ms-vscode.hexeditor",
+        "csstools.postcss",
+        "ms-vscode.vscode-css-peek",
+        "tombonnike.vscode-status-bar-format-toggle",
+        "wix.vscode-import-cost",
+        "gruntfuggly.todo-tree",
+        "ms-vscode-remote.remote-containers",
+        "github.vscode-github-actions",
+        "github.vscode-pull-request-github"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        "typescript.preferences.importModuleSpecifier": "relative",
+        "typescript.updateImportsOnFileMove.enabled": "always",
+        "files.insertFinalNewline": true,
+        "files.trimTrailingWhitespace": true,
+        "files.trimFinalNewlines": true,
+        "files.eol": "\n",
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": false
+      }
+    }
+  },
+  "forwardPorts": [8080, 8081, 5432, 24678],
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "moby": false
+    }
+  },
+  "remoteUser": "root"
+}

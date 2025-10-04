@@ -1,0 +1,52 @@
+# Production Docker Compose Configuration
+# NOTE: This file is for testing/verifying Dockerfile.prod builds locally.
+# Do NOT use this configuration for actual production deployment.
+# Use proper container orchestration (Kubernetes, Docker Swarm) or cloud services
+# with appropriate environment variable management and secrets handling.
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: ./apps/frontend/Dockerfile.prod
+    ports:
+      - "8081:8080"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./apps/backend/Dockerfile.prod
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - HOST=0.0.0.0
+      - LOG_LEVEL=info
+      - SESSION_DRIVER=cookie
+      - APP_KEY=${APP_KEY}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=solid_adonis
+      - DB_PASSWORD=password
+      - DB_DATABASE=db_production
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:17.6-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=solid_adonis
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=db_production
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

@@ -1,0 +1,27 @@
+services:
+  shared:
+    volumes:
+      - type: bind
+        source: ${LOCAL_WORKSPACE_FOLDER}
+        target: /workspace
+
+  frontend:
+    volumes:
+      - type: bind
+        source: ${LOCAL_WORKSPACE_FOLDER}
+        target: /workspace
+
+  backend:
+    volumes:
+      - type: bind
+        source: ${LOCAL_WORKSPACE_FOLDER}
+        target: /workspace
+
+  migrate:
+    volumes:
+      - type: bind
+        source: ${LOCAL_WORKSPACE_FOLDER}
+        target: /workspace
+      - type: volume
+        source: backend_node_modules
+        target: /workspace/node_modules

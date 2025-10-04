@@ -1,0 +1,41 @@
+services:
+  dev:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    environment:
+      - MISE_DATA_DIR=/root/.local/share/mise
+      - PATH=/root/.local/share/mise/shims:/root/.local/bin:/usr/local/cargo/bin:$PATH
+    volumes:
+      - type: bind
+        source: ..
+        target: /workspace
+        consistency: cached
+      - type: volume
+        source: dev_node_modules
+        target: /workspace/node_modules
+      - type: volume
+        source: dev_root
+        target: /root
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    working_dir: /workspace
+    command: >
+      /bin/bash -c "
+        echo 'eval \"\$$(mise activate bash)\"' >> ~/.bashrc &&
+        . ~/.bashrc &&
+        just setup &&
+        just --completions bash > ~/.just-completions.bash &&
+        echo 'source ~/.just-completions.bash' >> ~/.bashrc &&
+        sleep infinity
+      "
+    stdin_open: true
+    tty: true
+    user: root
+
+volumes:
+  dev_node_modules:
+    driver: local
+  dev_root:
+    driver: local

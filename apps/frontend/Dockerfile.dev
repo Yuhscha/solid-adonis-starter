@@ -1,0 +1,30 @@
+FROM node:24
+
+WORKDIR /workspace
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy workspace files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
+
+# Copy shared package
+COPY ./apps/shared ./apps/shared
+
+# Copy frontend package
+COPY ./apps/frontend ./apps/frontend
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Build shared package
+RUN pnpm build:shared
+
+# Set working directory to frontend
+WORKDIR /workspace/apps/frontend
+
+# Expose port
+EXPOSE 8081
+
+# Start development server
+CMD ["sh", "-c", "trap 'echo \"Received SIGTERM, shutting down gracefully...\"; exit 0' TERM; pnpm dev & wait"]

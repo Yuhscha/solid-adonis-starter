@@ -1,0 +1,21 @@
+FROM node:24-alpine
+
+WORKDIR /workspace
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy workspace files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json eslint.config.js ./
+
+# Copy all app packages
+COPY ./apps ./apps
+
+# Install dependencies (allow lockfile updates for CI)
+RUN pnpm install --no-frozen-lockfile
+
+# Build shared package
+RUN pnpm build:shared
+
+# Default command for CI
+CMD ["pnpm", "test"]

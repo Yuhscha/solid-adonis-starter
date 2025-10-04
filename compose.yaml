@@ -1,0 +1,127 @@
+services:
+  shared:
+    build:
+      context: .
+      dockerfile: ./apps/backend/Dockerfile.dev
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+      - type: volume
+        source: shared_node_modules
+        target: /workspace/node_modules
+    working_dir: /workspace
+    command: ["pnpm", "--filter", "shared", "dev"]
+    develop:
+      watch:
+        - action: rebuild
+          path: ./apps/shared/src
+        - action: rebuild
+          path: ./apps/shared/package.json
+        - action: rebuild
+          path: ./apps/shared/tsconfig.json
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./apps/frontend/Dockerfile.dev
+    ports:
+      - "8081:8081"
+      - "24678:24678"
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+      - type: volume
+        source: frontend_node_modules
+        target: /workspace/node_modules
+      - type: volume
+        source: frontend_root
+        target: /root
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - shared
+      - backend
+    init: true
+    stop_grace_period: 30s
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./apps/backend/Dockerfile.dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+      - type: volume
+        source: backend_node_modules
+        target: /workspace/node_modules
+      - type: volume
+        source: backend_root
+        target: /root
+    depends_on:
+      shared:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  postgres:
+    image: postgres:17.6-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db_development
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d db_development"]
+      interval: 3s
+      timeout: 2s
+      retries: 5
+      start_period: 2s
+
+  migrate:
+    build:
+      context: .
+      dockerfile: ./apps/backend/Dockerfile.dev
+    volumes:
+      - type: bind
+        source: .
+        target: /workspace
+      - type: volume
+        source: backend_node_modules
+        target: /workspace/node_modules
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_DATABASE=db_development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["node", "ace", "migration:run"]
+    working_dir: /workspace/apps/backend
+    restart: "no"
+
+volumes:
+  shared_node_modules:
+    driver: local
+  frontend_node_modules:
+    driver: local
+  frontend_root:
+    driver: local
+  backend_node_modules:
+    driver: local
+  backend_root:
+    driver: local
+  postgres_data:
+    driver: local

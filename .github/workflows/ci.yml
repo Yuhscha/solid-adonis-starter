@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test:
+    name: Test and Lint with Docker
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17.6-alpine
+        env:
+          POSTGRES_USER: solid_adonis
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: db_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build CI Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./.github/docker/Dockerfile.ci
+          tags: ci-image:latest
+          load: true
+
+      - name: Run lint
+        run: docker run --rm ci-image:latest pnpm lint
+
+      - name: Run backend tests
+        run: |
+          APP_KEY=$(docker run --rm -w /workspace/apps/backend ci-image:latest node ace generate:key --show)
+          docker run --rm \
+            --network host \
+            -e NODE_ENV=test \
+            -e DB_HOST=localhost \
+            -e DB_PORT=5432 \
+            -e DB_USER=solid_adonis \
+            -e DB_PASSWORD=password \
+            -e DB_DATABASE=db_test \
+            -e HOST=0.0.0.0 \
+            -e LOG_LEVEL=info \
+            -e SESSION_DRIVER=cookie \
+            -e APP_KEY="$APP_KEY" \
+            ci-image:latest pnpm --filter backend test
+
+      - name: Run frontend tests
+        run: docker run --rm ci-image:latest pnpm --filter frontend test:run
+
+      - name: Run type check (backend only)
+        run: docker run --rm ci-image:latest pnpm --filter backend typecheck
+
+      - name: Build all packages
+        run: |
+          docker run --rm ci-image:latest pnpm --filter frontend build
+          docker run --rm ci-image:latest pnpm --filter backend build
+
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Test frontend production build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/frontend/Dockerfile.prod
+          push: false
+          tags: frontend:test
+
+      - name: Test backend production build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/backend/Dockerfile.prod
+          push: false
+          tags: backend:test

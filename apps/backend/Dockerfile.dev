@@ -1,0 +1,33 @@
+FROM node:24
+
+WORKDIR /workspace
+
+# Install pnpm
+RUN npm install -g pnpm
+ENV PNPM_HOME="/root/.local/share/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN mkdir -p $PNPM_HOME
+
+# Copy workspace files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
+
+# Copy shared package
+COPY ./apps/shared ./apps/shared
+
+# Copy backend package
+COPY ./apps/backend ./apps/backend
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Build shared package
+RUN pnpm build:shared
+
+# Set working directory to backend
+WORKDIR /workspace/apps/backend
+
+# Expose port
+EXPOSE 3333
+
+# Start development server
+CMD ["node", "ace", "serve", "--hmr"]
